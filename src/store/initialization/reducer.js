@@ -7,8 +7,8 @@ import * as types from './types'
 function locations(state = [], action) {
   const { location, locationValue } = action
   switch (action.type) {
-    case listsTypes.INIIALIZE:
-    case collectionsTypes.INIIALIZE:
+    case listsTypes.INITIALIZE:
+    case collectionsTypes.INITIALIZE:
     case pathsTypes.VALUE_CHANGED:
     case docsTypes.VALUE_CHANGED:
       return {
@@ -21,8 +21,8 @@ export default function initialization(state = {}, action) {
   const { path } = action
 
   switch (action.type) {
-    case listsTypes.INIIALIZE:
-    case collectionsTypes.INIIALIZE:
+    case listsTypes.INITIALIZE:
+    case collectionsTypes.INITIALIZE:
     case pathsTypes.VALUE_CHANGED:
     case docsTypes.VALUE_CHANGED:
       return {

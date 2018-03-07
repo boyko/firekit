@@ -1,8 +1,8 @@
-import * as types from './types'
-import * as selectors from './selectors'
-import * as initSelectors from '../initialization/selectors'
-import { logError } from '../errors/actions'
-import { logLoading } from '../loadings/actions'
+import * as types from './types';
+import * as selectors from './selectors';
+import * as initSelectors from '../initialization/selectors';
+import { logError } from '../errors/actions';
+import { logLoading, clearLoading } from '../loadings/actions';
 
 export const valueChanged = (value, location, path, locationValue) => {
   return {
@@ -10,96 +10,202 @@ export const valueChanged = (value, location, path, locationValue) => {
     payload: value,
     path,
     location,
-    locationValue
-  }
-}
+    locationValue,
+  };
+};
+
+export const startWatch = (location, path, locationValue) => {
+  return {
+    type: types.WATCH_START,
+    path,
+    location,
+    locationValue,
+  };
+};
+
+export const getStart = (location, path) => {
+  return {
+    type: types.GET_START,
+    path,
+    location,
+  };
+};
+
+export const getError = (location, path, error) => {
+  return {
+    type: types.GET_ERROR,
+    path,
+    location,
+    error,
+  };
+};
+
+export const getSuccess = (location, path, payload) => {
+  return {
+    type: types.GET_SUCCESS,
+    path,
+    location,
+    payload,
+  };
+};
+
+export const startWatchNonexisting = (location, path, locationValue) => {
+  return {
+    type: types.WATCH_NONEXISTING,
+    path,
+    location,
+    locationValue,
+  };
+};
 
 export const destroy = (location) => {
   return {
     type: types.DESTROY,
-    location
-  }
-}
+    location,
+  };
+};
 
 export const unWatch = (path) => {
   return {
     type: types.UNWATCH,
-    path
-  }
-}
+    path,
+  };
+};
 
-export const getRef = (firebaseApp, path) => {
+const getRef = (firebaseApp, path) => {
   if (typeof path === 'string' || path instanceof String) {
-    return firebaseApp.firestore().doc(path)
-  } else {
-    return path
+    return firebaseApp.firestore().doc(path);
   }
-}
+  else {
+    return path;
+  }
+};
 
-export const getLocation = (firebaseApp, path) => {
+const getLocation = (firebaseApp, path) => {
   if (typeof path === 'string' || path instanceof String) {
-    return path
+    return path;
   } else {
-    return firebaseApp.firestore().doc(path).path
+    return firebaseApp.firestore().doc(path).path;
   }
-}
+};
 
-export function watchDoc (firebaseApp, firebasePath, reduxPath = false) {
-  let ref = getRef(firebaseApp, firebasePath)
-  let path = ref.path
-  let location = reduxPath || getLocation(firebaseApp, firebasePath)
+export function unwatchDoc(firebaseApp, path, opts) {
+
+  let reduxPath;
+
+  if (opts) {
+    reduxPath = opts.reduxPath;
+  }
 
   return (dispatch, getState) => {
-    const isInitialized = initSelectors.isInitialised(getState(), location)
+    // const location = reduxPath ? reduxPath : path;
+    const location = path;
+    const allInitializations = selectors.getAllInitializations(getState());
+    const unsubs = allInitializations[path];
 
-    if (!isInitialized) {
-      dispatch(logLoading(location))
-
-      let unsub = ref.onSnapshot(doc => {
-        dispatch(valueChanged(doc.data(), location, path, unsub))
-      }, err => {
-        console.error(err)
-        dispatch(logError(location, err))
-      })
-    }
-  }
-}
-
-export function unwatchDoc (firebaseApp, path, reduxPath = false) {
-  return (dispatch, getState) => {
-    const location = reduxPath || path
-    const allInitializations = selectors.getAllInitializations(getState())
-    const unsubs = allInitializations[location]
-
+    // TODO: this will unload all watcher under a path!
     if (unsubs) {
       Object.keys(unsubs).map((key) => {
-        const unsub = unsubs[key]
+        const unsub = unsubs[key];
         if (typeof unsub === 'function') {
-          unsub()
+          unsub();
         }
-        dispatch(unWatch(location))
-      })
+        dispatch(unWatch(location));
+      });
     }
-  }
+  };
 }
 
-export function destroyDoc (firebaseApp, path, reduxPath = false) {
-  const location = reduxPath || path
+const defaultWatchOpts = { reduxPath: null, unwatchIfNotExist: false };
 
-  return dispatch => {
-    unwatchDoc(firebaseApp, location)
-    dispatch(unWatch(location))
-    dispatch(destroy(location))
-  }
-}
+export function watchDoc(firebaseApp, firebasePath, opts) {
+  const nextOpts = { ...defaultWatchOpts, ...opts };
+  const { reduxPath, unwatchIfNotExist } = nextOpts;
+  const ref = getRef(firebaseApp, firebasePath);
+  const { path } = ref;
+  const location = reduxPath || getLocation(firebaseApp, firebasePath);
 
-export function unwatchAllDocs (firebaseApp) {
   return (dispatch, getState) => {
-    const allPaths = selectors.getAllDocs(getState())
+    const isInitialized = initSelectors.isInitialised(getState(), location);
 
-    Object.keys(allPaths).forEach(function (key, index) {
-      unwatchDoc(firebaseApp, allPaths[index])
-      dispatch(unWatch(key))
-    })
-  }
+    dispatch(startWatch(location, path));
+
+    return new Promise((resolve) => {
+      if (!isInitialized) {
+        dispatch(logLoading(location));
+        const unsub = ref.onSnapshot(doc => {
+            if (doc.exists) {
+              dispatch(valueChanged(doc.data(), location, path, unsub));
+              resolve(doc.data());
+            }
+            else {
+              if (unwatchIfNotExist) {
+                unwatchDoc(firebaseApp, path, { reduxPath });
+              }
+              dispatch(startWatchNonexisting(location, path, unsub));
+              dispatch(clearLoading(location));
+            }
+            resolve(null);
+          },
+          error => {
+            console.log(error);
+            dispatch(logError(location, error));
+          });
+      }
+      else {
+        resolve();
+      }
+    });
+  };
+}
+
+export function destroyDoc(firebaseApp, path, reduxPath = false) {
+  const location = reduxPath || path;
+
+  // TODO: location and path?
+  return dispatch => {
+    unwatchDoc(firebaseApp, path, { reduxPath });
+    dispatch(unWatch(path));
+    dispatch(destroy(location));
+  };
+}
+
+export function unwatchAllDocs(firebaseApp) {
+  return (dispatch, getState) => {
+    const allInitializations = selectors.getAllInitializations(getState());
+
+    Object.keys(allInitializations).forEach(key => {
+      dispatch(unwatchDoc(firebaseApp, key));
+    });
+  };
+}
+
+export function destroyAllDocs(firebaseApp) {
+  return dispatch => {
+    dispatch(unwatchAllDocs(firebaseApp));
+    dispatch({ type: types.DESTROY_ALL });
+  };
+}
+
+
+export function getDoc(firebaseApp, firebasePath, opts) {
+  const nextOpts = { ...defaultWatchOpts, ...opts };
+  const { reduxPath } = nextOpts;
+  const ref = getRef(firebaseApp, firebasePath);
+  const { path } = ref;
+  const location = reduxPath || getLocation(firebaseApp, firebasePath);
+
+  return (dispatch, getState) => {
+    dispatch(getStart(location, path));
+    return ref.get()
+      .then(doc => {
+        if (doc.exists) {
+          dispatch(getSuccess(location, path, doc.data()));
+        }
+        else {
+          dispatch(getError(location, path, 'Document not found'));
+        }
+      })
+      .catch(error => dispatch(getError(location, path, error)));
+  };
 }

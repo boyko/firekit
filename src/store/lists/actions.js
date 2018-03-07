@@ -6,7 +6,7 @@ import { logLoading } from '../loadings/actions'
 
 export const initialize = (list, location, path, append) => {
   return {
-    type: types.INIIALIZE,
+    type: types.INITIALIZE,
     payload: list,
     path,
     location,

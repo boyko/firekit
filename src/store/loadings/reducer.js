@@ -19,8 +19,8 @@ export default function loadings (state = {}, action) {
       return {}
 
     case types.CLEAR_LOADING:
-    case collectionsTypes.INIIALIZE:
-    case listsTypes.INIIALIZE:
+    case collectionsTypes.INITIALIZE:
+    case listsTypes.INITIALIZE:
     case pathsTypes.VALUE_CHANGED:
     case docsTypes.VALUE_CHANGED:
     case listsTypes.DESTROY:

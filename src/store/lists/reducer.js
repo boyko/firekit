@@ -3,7 +3,7 @@ import * as types from './types'
 function list (list = [], action) {
   const { payload, append } = action
   switch (action.type) {
-    case types.INIIALIZE:
+    case types.INITIALIZE:
       return append ? [...list, ...payload] : payload
 
     case types.CHILD_ADDED:
@@ -21,7 +21,7 @@ export default function lists (state = {}, action) {
   const { location } = action
 
   switch (action.type) {
-    case types.INIIALIZE:
+    case types.INITIALIZE:
       return {
         ...state,
         [location]: list(state[action.location], action)

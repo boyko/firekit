@@ -1,43 +1,53 @@
-import * as types from './types'
+import * as types from './types';
 
 function collection(list = [], action) {
-  const { payload, append } = action
+  const { payload, append } = action;
   switch (action.type) {
-    case types.INIIALIZE:
-      return append ? [...list, ...payload] : payload
+
+    case types.INITIALIZE:
+      return append ? [...list, ...payload] : payload;
 
     case types.CHILD_ADDED:
-      return [...list, payload]
+      return [...list, payload];
 
     case types.CHILD_CHANGED:
-      return list.map(child => payload.id === child.id ? payload : child)
+      return list.map(child => payload.id === child.id ? payload : child);
 
     case types.CHILD_REMOVED:
-      return list.filter(child => payload.id !== child.id)
+      return list.filter(child => payload.id !== child.id);
 
+    case types.GET_COLLECTION:
+      return action.payload;
+
+    default:
+      return list;
   }
 }
 
 export default function collections(state = {}, action) {
-  const { location } = action
+  const { location } = action;
 
   switch (action.type) {
-    case types.INIIALIZE:
+    case types.INITIALIZE:
       return {
         ...state,
-        [location]: collection(state[action.location], action)
-      }
+        [location]: collection(state[action.location], action),
+      };
 
     case types.CHILD_ADDED:
     case types.CHILD_CHANGED:
     case types.CHILD_REMOVED:
-      return { ...state, [location]: collection(state[action.location], action) }
+      return { ...state, [location]: collection(state[action.location], action) };
 
     case types.DESTROY:
-      const { [location]: omitData, ...rest } = state
-      return { ...rest }
+      const { [location]: omitData, ...rest } = state;
+      return { ...rest };
+
+    case types.GET_COLLECTION:
+      return { ...state, [location]: collection(state[action.location], action) };
 
     default:
-      return state
+      return state;
   }
 }
+

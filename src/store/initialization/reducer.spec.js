@@ -26,7 +26,7 @@ describe('initialization reducer', () => {
 
   it('should initialize', () => {
     expect(
-      reducer({}, { type: '@@firekit/LISTS@INIIALIZE', path: 'path', payload: [], location: 'location', append: false, locationValue: true })
+      reducer({}, { type: '@@firekit/LISTS@INITIALIZE', path: 'path', payload: [], location: 'location', append: false, locationValue: true })
     ).toEqual({
       'path': {
         'location': true

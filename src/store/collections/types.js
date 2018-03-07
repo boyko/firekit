@@ -1,7 +1,9 @@
-export const APPEND_INIIALIZE = `@@firekit/COLLECTIONS@APPEND_INIIALIZE`
-export const INIIALIZE = `@@firekit/COLLECTIONS@INIIALIZE`
-export const DESTROY = `@@firekit/COLLECTIONS@DESTROY`
-export const UNWATCH = `@@firekit/COLLECTIONS@UNWATCH`
-export const CHILD_ADDED = `@@firekit/COLLECTIONS@CHILD_ADDED`
-export const CHILD_CHANGED = `@@firekit/COLLECTIONS@CHILD_CHANGED`
-export const CHILD_REMOVED = `@@firekit/COLLECTIONS@CHILD_REMOVED`
+export const APPEND_INITIALIZE = `@@firekit/COLLECTIONS@APPEND_INITIALIZE`;
+export const INITIALIZE = `@@firekit/COLLECTIONS@INITIALIZE`;
+export const DESTROY = `@@firekit/COLLECTIONS@DESTROY`;
+export const UNWATCH = `@@firekit/COLLECTIONS@UNWATCH`;
+export const CHILD_ADDED = `@@firekit/COLLECTIONS@CHILD_ADDED`;
+export const CHILD_CHANGED = `@@firekit/COLLECTIONS@CHILD_CHANGED`;
+export const CHILD_REMOVED = `@@firekit/COLLECTIONS@CHILD_REMOVED`;
+export const SNAPSHOT_CHANGE = `@@firekit/COLLECTIONS@SNAPSHOT_CHANGE`;
+export const GET_COLLECTION = `@@firekit/COLLECTIONS@GET`;
