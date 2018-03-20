@@ -39,7 +39,7 @@ export { logError, clearError, clearAllErrors } from './store/errors/actions';
 export { logLoading, clearLoading, clearAllLoadings } from './store/loadings/actions';
 export { watchAuth, authStateChanged, authError } from './store/auth/actions';
 export { watchCol, unwatchCol, destroyCol, unwatchAllCols } from './store/collections/actions';
-export { watchDoc, unwatchDoc, destroyDoc, unwatchAllDocs } from './store/docs/actions';
+export { watchDoc, unwatchDoc, destroyDoc, unwatchAllDocs, destroyAllDocs } from './store/docs/actions';
 export { watchList, unwatchList, destroyList, unwatchAllLists } from './store/lists/actions';
 export { watchPath, unwatchPath, destroyPath, unwatchAllPaths } from './store/paths/actions';
 

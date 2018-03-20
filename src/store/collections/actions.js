@@ -197,7 +197,6 @@ export function unwatchCol(firebaseApp, firebasePath) {
         dispatch(unWatch(location));
       });
     }
-
   };
 }
 
