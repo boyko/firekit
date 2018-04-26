@@ -33,7 +33,7 @@ export function onMessagingError (error) {
   }
 }
 
-export function initMessaging (firebaseApp, handleTokenChange, onMessageReceieved) {
+export function initMessaging (firebaseApp, handleTokenChange, onMessageReceieved, onBackgroundMessageReceived) {
   return dispatch => {
     const messaging = firebaseApp.messaging()
 
@@ -47,14 +47,16 @@ export function initMessaging (firebaseApp, handleTokenChange, onMessageReceieve
             handleTokenChange(token)
           }
 
+          dispatch(onPermissionChanged(true))
           dispatch(onTokenChanged(token))
         })
         .catch(error => {
           dispatch(onPermissionChanged(false))
+          console.warn(error)
         })
     } catch (e) {
       dispatch(onPermissionChanged(false))
-      console.error(e)
+      console.warn(e)
     }
 
     messaging.onMessage(payload => {

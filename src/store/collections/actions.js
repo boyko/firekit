@@ -74,7 +74,7 @@ const getRef = (firebaseApp, path) => {
   }
 };
 
-const getLocation = (firebaseApp, path) => {
+export const getLocation = (firebaseApp, path) => {
   if (typeof path === 'string' || path instanceof String) {
     return path;
   } else {
@@ -221,7 +221,6 @@ export function destroyCol(firebaseApp, firebasePath, reduxPath = false) {
   };
 }
 
-
 export function unwatchAllCol(firebaseApp, path) {
   return (dispatch, getState) => {
     const allLists = selectors.getAllCols(getState());
@@ -235,11 +234,11 @@ export function unwatchAllCol(firebaseApp, path) {
 
 export function unwatchAllCols(firebaseApp, path) {
   return (dispatch, getState) => {
-    const allColls = selectors.getAllCols(getState());
+    const allColls = selectors.getAllCols(getState())
 
-    Object.keys(allColls).forEach((key, index) => {
-      unwatchCol(firebaseApp, key);
-      dispatch(destroyCol(firebaseApp, allColls[index]));
-    });
-  };
+    Object.keys(allColls).forEach(function (key, index) {
+      unwatchCol(firebaseApp, key)
+      dispatch(destroyCol(firebaseApp, allColls[index]))
+    })
+  }
 }
