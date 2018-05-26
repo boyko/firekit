@@ -134,23 +134,23 @@ export function watchDoc(firebaseApp, firebasePath, opts) {
       if (!isInitialized) {
         dispatch(logLoading(location));
         const unsub = ref.onSnapshot(doc => {
-            if (doc.exists) {
-              dispatch(valueChanged(doc.data(), location, path, unsub));
-              resolve(doc.data());
-            }
-            else {
-              if (unwatchIfNotExist) {
-                unwatchDoc(firebaseApp, path, { reduxPath });
+              if (doc.exists) {
+                dispatch(valueChanged(doc.data(), location, path, unsub));
+                resolve(doc.data());
               }
-              dispatch(startWatchNonexisting(location, path, unsub));
-              dispatch(clearLoading(location));
-            }
-            resolve(null);
-          },
-          error => {
-            console.log(error);
-            dispatch(logError(location, error));
-          });
+              else {
+                if (unwatchIfNotExist) {
+                  unwatchDoc(firebaseApp, path, { reduxPath });
+                }
+                dispatch(startWatchNonexisting(location, path, unsub));
+                dispatch(clearLoading(location));
+              }
+              resolve(null);
+            },
+            error => {
+              console.log(error);
+              dispatch(logError(location, error));
+            });
       }
       else {
         resolve();
@@ -198,14 +198,14 @@ export function getDoc(firebaseApp, firebasePath, opts) {
   return (dispatch, getState) => {
     dispatch(getStart(location, path));
     return ref.get()
-      .then(doc => {
-        if (doc.exists) {
-          dispatch(getSuccess(location, path, doc.data()));
-        }
-        else {
-          dispatch(getError(location, path, 'Document not found'));
-        }
-      })
-      .catch(error => dispatch(getError(location, path, error)));
+        .then(doc => {
+          if (doc.exists) {
+            dispatch(getSuccess(location, path, doc.data()));
+          }
+          else {
+            dispatch(getError(location, path, 'Document not found'));
+          }
+        })
+        .catch(error => dispatch(getError(location, path, error)));
   };
 }
