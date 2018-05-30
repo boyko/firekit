@@ -118,14 +118,14 @@ export function unwatchDoc(firebaseApp, path, opts) {
 
 const defaultWatchOpts = { reduxPath: null, unwatchIfNotExist: false };
 
-export function watchDoc(firebaseApp, firebasePath, opts) {
+export function watchDoc(firebasePath, opts) {
   const nextOpts = { ...defaultWatchOpts, ...opts };
   const { reduxPath, unwatchIfNotExist } = nextOpts;
-  const ref = getRef(firebaseApp, firebasePath);
-  const { path } = ref;
-  const location = reduxPath || getLocation(firebaseApp, firebasePath);
+  return (dispatch, getState, { firebase }) => {
+    const ref = getRef(firebase, firebasePath);
+    const { path } = ref;
+    const location = reduxPath || getLocation(firebaseApp, firebasePath);
 
-  return (dispatch, getState) => {
     const isInitialized = initSelectors.isInitialised(getState(), location);
 
     dispatch(startWatch(location, path));

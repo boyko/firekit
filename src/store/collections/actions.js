@@ -104,46 +104,46 @@ export function watchCol(firebaseApp, firebasePath, opts = {}) {
       dispatch(logLoading(location));
       return new Promise((resolve, reject) => {
         const unsub = ref.onSnapshot(
-          snapshot => {
-            dispatch(snapshotChange(location, snapshot));
-            dispatch(clearLoading(location));
-            snapshot.docChanges.forEach(change => {
-              if (change.type === 'added') {
-                if (initialized) {
-                  dispatch(childAdded({
+            snapshot => {
+              dispatch(snapshotChange(location, snapshot));
+              dispatch(clearLoading(location));
+              snapshot.docChanges().forEach(change => {
+                if (change.type === 'added') {
+                  if (initialized) {
+                    dispatch(childAdded({
+                      id: change.doc.id,
+                      data: change.doc.data(),
+                    }, location));
+                  }
+                  else {
+                    initialized = true;
+                    dispatch(initialize([{
+                      id: change.doc.id,
+                      data: change.doc.data(),
+                    }], location, path, unsub));
+                  }
+                }
+                if (change.type === 'modified') {
+                  dispatch(childChanged({
                     id: change.doc.id,
                     data: change.doc.data(),
                   }, location));
                 }
-                else {
-                  initialized = true;
-                  dispatch(initialize([{
+                if (change.type === 'removed') {
+                  dispatch(childRemoved({
                     id: change.doc.id,
                     data: change.doc.data(),
-                  }], location, path, unsub));
+                  }, location));
                 }
-              }
-              if (change.type === 'modified') {
-                dispatch(childChanged({
-                  id: change.doc.id,
-                  data: change.doc.data(),
-                }, location));
-              }
-              if (change.type === 'removed') {
-                dispatch(childRemoved({
-                  id: change.doc.id,
-                  data: change.doc.data(),
-                }, location));
-              }
-              resolve();
-            });
-          }
-          ,
-          error => {
-            dispatch(logError(location, error));
-            console.log(error);
-            reject();
-          },
+                resolve();
+              });
+            }
+            ,
+            error => {
+              dispatch(logError(location, error));
+              console.log(error);
+              reject();
+            },
         );
       });
     }
@@ -167,15 +167,15 @@ export function getCol(firebaseApp, firebasePath, opts = {}) {
       console.log(error);
     };
     ref.get(
-      querySnapshot => {
+        querySnapshot => {
 
-        const data = [];
-        querySnapshot.forEach(doc => {
-          data.push({ id: doc.id, data: doc.data() });
-        });
-        dispatch({ type: types.GET_COLLECTION, payload: data, location });
-      },
-      handleError,
+          const data = [];
+          querySnapshot.forEach(doc => {
+            data.push({ id: doc.id, data: doc.data() });
+          });
+          dispatch({ type: types.GET_COLLECTION, payload: data, location });
+        },
+        handleError,
     );
   };
 }
@@ -234,11 +234,11 @@ export function unwatchAllCol(firebaseApp, path) {
 
 export function unwatchAllCols(firebaseApp, path) {
   return (dispatch, getState) => {
-    const allColls = selectors.getAllCols(getState())
+    const allColls = selectors.getAllCols(getState());
 
     Object.keys(allColls).forEach(function (key, index) {
-      unwatchCol(firebaseApp, key)
-      dispatch(destroyCol(firebaseApp, allColls[index]))
-    })
-  }
+      unwatchCol(firebaseApp, key);
+      dispatch(destroyCol(firebaseApp, allColls[index]));
+    });
+  };
 }
