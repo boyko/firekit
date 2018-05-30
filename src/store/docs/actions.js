@@ -124,7 +124,7 @@ export function watchDoc(firebasePath, opts) {
   return (dispatch, getState, { firebase }) => {
     const ref = getRef(firebase, firebasePath);
     const { path } = ref;
-    const location = reduxPath || getLocation(firebaseApp, firebasePath);
+    const location = reduxPath || getLocation(firebase, firebasePath);
 
     const isInitialized = initSelectors.isInitialised(getState(), location);
 
