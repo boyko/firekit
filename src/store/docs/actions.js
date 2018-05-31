@@ -85,42 +85,22 @@ const getLocation = (firebaseApp, path) => {
   if (typeof path === 'string' || path instanceof String) {
     return path;
   } else {
-    return firebaseApp.firestore().doc(path).path;
+    try {
+      return path.path;
+    }
+    catch (error) {
+      // TODO: check path
+      throw new Error('Invalid path');
+    }
   }
 };
-
-export function unwatchDoc(firebaseApp, path, opts) {
-
-  let reduxPath;
-
-  if (opts) {
-    reduxPath = opts.reduxPath;
-  }
-
-  return (dispatch, getState) => {
-    // const location = reduxPath ? reduxPath : path;
-    const location = path;
-    const allInitializations = selectors.getAllInitializations(getState());
-    const unsubs = allInitializations[path];
-
-    // TODO: this will unload all watcher under a path!
-    if (unsubs) {
-      Object.keys(unsubs).map((key) => {
-        const unsub = unsubs[key];
-        if (typeof unsub === 'function') {
-          unsub();
-        }
-        dispatch(unWatch(location));
-      });
-    }
-  };
-}
 
 const defaultWatchOpts = { reduxPath: null, unwatchIfNotExist: false };
 
 export function watchDoc(firebasePath, opts) {
   const nextOpts = { ...defaultWatchOpts, ...opts };
   const { reduxPath, unwatchIfNotExist } = nextOpts;
+
   return (dispatch, getState, { firebase }) => {
     const ref = getRef(firebase, firebasePath);
     const { path } = ref;
@@ -207,5 +187,32 @@ export function getDoc(firebaseApp, firebasePath, opts) {
           }
         })
         .catch(error => dispatch(getError(location, path, error)));
+  };
+}
+
+export function unwatchDoc(firebaseApp, path, opts) {
+
+  let reduxPath;
+
+  if (opts) {
+    reduxPath = opts.reduxPath;
+  }
+
+  return (dispatch, getState) => {
+    // const location = reduxPath ? reduxPath : path;
+    const location = path;
+    const allInitializations = selectors.getAllInitializations(getState());
+    const unsubs = allInitializations[path];
+
+    // TODO: this will unload all watcher under a path!
+    if (unsubs) {
+      Object.keys(unsubs).map((key) => {
+        const unsub = unsubs[key];
+        if (typeof unsub === 'function') {
+          unsub();
+        }
+        dispatch(unWatch(location));
+      });
+    }
   };
 }
