@@ -139,16 +139,17 @@ export function watchDoc(firebasePath, opts) {
   };
 }
 
-export function destroyDoc(firebaseApp, path, reduxPath = false) {
-  const location = reduxPath || path;
+export const destroyDoc = (path, reduxPath) =>
+    (dispatch, getState, { firebase }) => {
+      const location = reduxPath || path;
 
-  // TODO: location and path?
-  return dispatch => {
-    unwatchDoc(firebaseApp, path, { reduxPath });
-    dispatch(unWatch(path));
-    dispatch(destroy(location));
-  };
-}
+      // TODO: location and path?
+      return dispatch => {
+        unwatchDoc(firebase, path, { reduxPath });
+        dispatch(unWatch(path));
+        dispatch(destroy(location));
+      };
+    };
 
 export function unwatchAllDocs(firebaseApp) {
   return (dispatch, getState) => {
