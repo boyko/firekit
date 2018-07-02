@@ -5,5 +5,6 @@ export const UNWATCH = `@@firekit/COLLECTIONS@UNWATCH`;
 export const CHILD_ADDED = `@@firekit/COLLECTIONS@CHILD_ADDED`;
 export const CHILD_CHANGED = `@@firekit/COLLECTIONS@CHILD_CHANGED`;
 export const CHILD_REMOVED = `@@firekit/COLLECTIONS@CHILD_REMOVED`;
+export const CHILD_REMOVED_MARK = `@@firekit/COLLECTIONS@CHILD_REMOVED_MARK`;
 export const SNAPSHOT_CHANGE = `@@firekit/COLLECTIONS@SNAPSHOT_CHANGE`;
 export const GET_COLLECTION = `@@firekit/COLLECTIONS@GET`;

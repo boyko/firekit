@@ -15,7 +15,13 @@ function collection(list = [], action) {
 
     case types.CHILD_REMOVED:
       return list.filter(child => payload.id !== child.id);
-
+    case types.CHILD_REMOVED_MARK: {
+      const nextList = [...list];
+      const removedChild = list.find(child => child.id === payload.id);
+      const removedChildIdx = list.indexOf(removedChild);
+      nextList[removedChildIdx] = payload;
+      return nextList;
+    }
     case types.GET_COLLECTION:
       return action.payload;
 
