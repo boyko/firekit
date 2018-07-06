@@ -114,23 +114,23 @@ export function watchDoc(firebasePath, opts) {
       if (!isInitialized) {
         dispatch(logLoading(location));
         const unsub = ref.onSnapshot(doc => {
-              if (doc.exists) {
-                dispatch(valueChanged(doc.data(), location, path, unsub));
-                resolve(doc.data());
+            if (doc.exists) {
+              dispatch(valueChanged(doc.data(), location, path, unsub));
+              resolve(doc.data());
+            }
+            else {
+              if (unwatchIfNotExist) {
+                unwatchDoc(firebaseApp, path, { reduxPath });
               }
-              else {
-                if (unwatchIfNotExist) {
-                  unwatchDoc(firebaseApp, path, { reduxPath });
-                }
-                dispatch(startWatchNonexisting(location, path, unsub));
-                dispatch(clearLoading(location));
-              }
-              resolve(null);
-            },
-            error => {
-              console.log(error);
-              dispatch(logError(location, error));
-            });
+              dispatch(startWatchNonexisting(location, path, unsub));
+              dispatch(clearLoading(location));
+            }
+            resolve(null);
+          },
+          error => {
+            console.log(error);
+            dispatch(logError(location, error));
+          });
       }
       else {
         resolve();
@@ -140,16 +140,16 @@ export function watchDoc(firebasePath, opts) {
 }
 
 export const destroyDoc = (path, reduxPath) =>
-    (dispatch, getState, { firebase }) => {
-      const location = reduxPath || path;
+  (dispatch, getState, { firebase }) => {
+    const location = reduxPath || path;
 
-      // TODO: location and path?
-      return dispatch => {
-        unwatchDoc(firebase, path, { reduxPath });
-        dispatch(unWatch(path));
-        dispatch(destroy(location));
-      };
+    // TODO: location and path?
+    return dispatch => {
+      unwatchDoc(firebase, path, { reduxPath });
+      dispatch(unWatch(path));
+      dispatch(destroy(location));
     };
+  };
 
 export function unwatchAllDocs(firebaseApp) {
   return (dispatch, getState) => {
@@ -177,17 +177,21 @@ export function getDoc(firebaseApp, firebasePath, opts) {
   const location = reduxPath || getLocation(firebaseApp, firebasePath);
 
   return (dispatch, getState) => {
-    dispatch(getStart(location, path));
+    dispatch(logLoading(location));
     return ref.get()
-        .then(doc => {
-          if (doc.exists) {
-            dispatch(getSuccess(location, path, doc.data()));
-          }
-          else {
-            dispatch(getError(location, path, 'Document not found'));
-          }
-        })
-        .catch(error => dispatch(getError(location, path, error)));
+      .then(doc => {
+        if (doc.exists) {
+          dispatch(getSuccess(location, path, doc.data()));
+          // TODO: maybe handle clear loading this in the reducer instead
+          dispatch(clearLoading(location));
+        }
+        else {
+          dispatch(getError(location, path, 'Document not found'));
+          // TODO: maybe handle clear loading this in the reducer instead
+          dispatch(clearLoading(location));
+        }
+      })
+      .catch(error => dispatch(getError(location, path, error)));
   };
 }
 

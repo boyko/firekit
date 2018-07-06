@@ -1,6 +1,6 @@
 {
   "name": "firekit",
-  "version": "1.0.19",
+  "version": "1.0.26",
   "description": "Firebase toolkit for sync with redux",
   "main": "lib/index.js",
   "module": "es/index.js",
@@ -20,7 +20,9 @@
     "test:watch": "nwb test-react --server"
   },
   "dependencies": {},
-  "peerDependencies": {},
+  "peerDependencies": {
+    "ramda": "^0.25.0"
+  },
   "devDependencies": {
     "firebase": "^5.0.4",
     "firebase-mock": "^2.2.4",

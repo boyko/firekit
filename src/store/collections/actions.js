@@ -51,7 +51,10 @@ export const childRemoved = (child, location) => {
 export const childRemovedMark = (child, location) => {
   return {
     type: types.CHILD_REMOVED_MARK,
-    payload: child,
+    payload: {
+      ...child,
+      __removed: true,
+    },
     location,
   };
 };
@@ -115,7 +118,7 @@ export function watchCol(firebaseApp, firebasePath, opts = {}) {
     const isInitialized = initSelectors.isInitialised(getState(), path, location);
     let initialized = false;
     if (!isInitialized || overrideQuery) {
-      if (!isInitialized) {
+      if (isInitialized) {
         // TODO: check if this removes the query listener...
         isInitialized();
       }

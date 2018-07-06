@@ -1,3 +1,4 @@
+import { update } from 'ramda';
 import * as types from './types';
 
 function collection(list = [], action) {
@@ -16,10 +17,11 @@ function collection(list = [], action) {
     case types.CHILD_REMOVED:
       return list.filter(child => payload.id !== child.id);
     case types.CHILD_REMOVED_MARK: {
-      const nextList = [...list];
+      console.log('CHILD REMOVED MARK');
       const removedChild = list.find(child => child.id === payload.id);
       const removedChildIdx = list.indexOf(removedChild);
-      nextList[removedChildIdx] = payload;
+      const nextList = update(removedChildIdx, payload, list);
+      console.log(nextList);
       return nextList;
     }
     case types.GET_COLLECTION:
@@ -43,6 +45,7 @@ export default function collections(state = {}, action) {
     case types.CHILD_ADDED:
     case types.CHILD_CHANGED:
     case types.CHILD_REMOVED:
+    case types.CHILD_REMOVED_MARK:
       return { ...state, [location]: collection(state[action.location], action) };
 
     case types.DESTROY:
