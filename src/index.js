@@ -8,6 +8,7 @@ import listsReducer from './store/lists/reducer';
 import loadingsReducers from './store/loadings/reducer';
 import messagingReducer from './store/messaging/reducer';
 import pathsReducer from './store/paths/reducer';
+import uploadsReducer from './storage/reducer';
 
 const firekitReducers = {
   auth: authReducer,
@@ -20,9 +21,11 @@ const firekitReducers = {
   loadings: loadingsReducers,
   messaging: messagingReducer,
   paths: pathsReducer,
+  uploads: uploadsReducer,
 };
 
 export { clearInitialization } from './store/initialization/actions';
+export { default as uploadsReducer } from './storage/reducer';
 export { default as authReducer } from './store/auth/reducer';
 export { default as collectionsReducer } from './store/collections/reducer';
 export { default as connectionReducer } from './store/connection/reducer';

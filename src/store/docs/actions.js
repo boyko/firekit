@@ -95,11 +95,15 @@ const getLocation = (firebaseApp, path) => {
   }
 };
 
-const defaultWatchOpts = { reduxPath: null, unwatchIfNotExist: false };
+const defaultWatchOpts = {
+  reduxPath: null,
+  unwatchIfNotExist: false,
+  preprocess: null,
+};
 
 export function watchDoc(firebasePath, opts) {
   const nextOpts = { ...defaultWatchOpts, ...opts };
-  const { reduxPath, unwatchIfNotExist } = nextOpts;
+  const { reduxPath, unwatchIfNotExist, preprocess } = nextOpts;
 
   return (dispatch, getState, { firebase }) => {
     const ref = getRef(firebase, firebasePath);
@@ -115,8 +119,9 @@ export function watchDoc(firebasePath, opts) {
         dispatch(logLoading(location));
         const unsub = ref.onSnapshot(doc => {
             if (doc.exists) {
-              dispatch(valueChanged(doc.data(), location, path, unsub));
-              resolve(doc.data());
+              const data = preprocess ? preprocess(doc.data()) : doc.data();
+              dispatch(valueChanged(data, location, path, unsub));
+              resolve(data);
             }
             else {
               if (unwatchIfNotExist) {

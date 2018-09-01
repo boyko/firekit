@@ -100,11 +100,12 @@ const defaultWatchColOpts = {
   query: null,
   overrideQuery: false,
   keepDeleted: true,
+  preprocess: null,
 };
 
 export function watchCol(firebaseApp, firebasePath, opts = {}) {
   const nextOpts = { ...defaultWatchColOpts, ...opts };
-  const { query, reduxPath, overrideQuery, keepDeleted } = nextOpts;
+  const { query, reduxPath, overrideQuery, keepDeleted, preprocess } = nextOpts;
   let ref = getRef(firebaseApp, firebasePath);
   const { path } = ref;
 
@@ -117,6 +118,7 @@ export function watchCol(firebaseApp, firebasePath, opts = {}) {
   return (dispatch, getState) => {
     const isInitialized = initSelectors.isInitialised(getState(), path, location);
     let initialized = false;
+    // TODO: check override query!
     if (!isInitialized || overrideQuery) {
       if (isInitialized) {
         // TODO: check if this removes the query listener...
@@ -130,45 +132,50 @@ export function watchCol(firebaseApp, firebasePath, opts = {}) {
             dispatch(clearLoading(location));
             snapshot.docChanges().forEach(change => {
               if (change.type === 'added') {
+                const data = preprocess ? preprocess(change.doc.data()) : change.doc.data();
                 if (initialized) {
                   dispatch(childAdded({
                     id: change.doc.id,
-                    data: change.doc.data(),
+                    data,
                   }, location));
                 }
                 else {
+                  const data = preprocess ? preprocess(change.doc.data()) : change.doc.data();
                   initialized = true;
                   dispatch(initialize([{
                     id: change.doc.id,
-                    data: change.doc.data(),
+                    data,
                   }], location, path, unsub));
                 }
               }
               if (change.type === 'modified') {
+                const data = preprocess ? preprocess(change.doc.data()) : change.doc.data();
                 dispatch(childChanged({
                   id: change.doc.id,
-                  data: change.doc.data(),
+                  data,
                 }, location));
               }
               if (change.type === 'removed') {
                 if (keepDeleted) {
+                  const data = preprocess ? preprocess(change.doc.data()) : change.doc.data();
                   dispatch(childRemovedMark({
                     id: change.doc.id,
-                    data: change.doc.data(),
+                    data,
                   }, location));
                 }
                 else {
+                  const data = preprocess ? preprocess(change.doc.data()) : change.doc.data();
                   dispatch(childRemoved({
                     id: change.doc.id,
                     data: {
-                      ...change.doc.data(),
+                      ...data,
                       __deleted: true,
                     },
                   }, location));
                 }
               }
-              resolve();
             });
+            resolve();
           }
           ,
           error => {
@@ -195,19 +202,16 @@ export function getCol(firebaseApp, firebasePath, opts = {}) {
   const location = reduxPath || getLocation(firebaseApp, firebasePath);
 
   return (dispatch, getState) => {
-    const handleError = error => {
-      console.log(error);
-    };
-    ref.get(
-      querySnapshot => {
-
+    return ref.get(querySnapshot => {
         const data = [];
         querySnapshot.forEach(doc => {
           data.push({ id: doc.id, data: doc.data() });
         });
-        dispatch({ type: types.GET_COLLECTION, payload: data, location });
+        dispatch({ type: types.GET_COLLECTION, payload: data, location, opts: nextOpts });
       },
-      handleError,
+      error => {
+        console.log(error);
+      },
     );
   };
 }
