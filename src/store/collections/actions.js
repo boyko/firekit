@@ -1,280 +1,210 @@
-import * as types from './types';
-import * as selectors from './selectors';
-import * as initSelectors from '../initialization/selectors';
-import { logError } from '../errors/actions';
-import { logLoading, clearLoading } from '../loadings/actions';
+import * as types from './types'
+import * as selectors from './selectors'
+import * as initSelectors from '../initialization/selectors'
+import { logError } from '../errors/actions'
+import { logLoading } from '../loadings/actions'
 
 export const initialize = (list, location, path, locationValue, append) => {
   return {
-    type: types.INITIALIZE,
+    type: types.INIIALIZE,
     payload: list,
     path,
     location,
     append,
-    locationValue,
-  };
-};
-
-export const snapshotChange = (location, snapshot) => {
-  return {
-    type: types.SNAPSHOT_CHANGE,
-    location,
-    snapshot,
-  };
-};
-
+    locationValue
+  }
+}
 
 export const childAdded = (child, location) => {
   return {
     type: types.CHILD_ADDED,
     payload: child,
-    location,
-  };
-};
+    location
+  }
+}
 
 export const childChanged = (child, location) => {
   return {
     type: types.CHILD_CHANGED,
     payload: child,
-    location,
-  };
-};
+    location
+  }
+}
 
 export const childRemoved = (child, location) => {
   return {
     type: types.CHILD_REMOVED,
     payload: child,
-    location,
-  };
-};
-
-export const childRemovedMark = (child, location) => {
-  return {
-    type: types.CHILD_REMOVED_MARK,
-    payload: {
-      ...child,
-      __removed: true,
-    },
-    location,
-  };
-};
+    location
+  }
+}
 
 export const destroy = location => {
   return {
     type: types.DESTROY,
-    location,
-  };
-};
+    location
+  }
+}
 
 export const unWatch = path => {
   return {
     type: types.UNWATCH,
-    path,
-  };
-};
+    path
+  }
+}
 
 const getPath = (firebaseApp, ref) => {
-  return ref.path;
-};
+  return ref._query.path.segments.join('/')
+}
 
-const getRef = (firebaseApp, path) => {
+export const getRef = (firebaseApp, path) => {
   if (typeof path === 'string' || path instanceof String) {
-    return firebaseApp.firestore().collection(path);
+    return firebaseApp.firestore().collection(path)
   } else {
-    return path;
+    return path
   }
-};
+}
 
 export const getLocation = (firebaseApp, path) => {
   if (typeof path === 'string' || path instanceof String) {
-    return path;
+    return path
   } else {
-    return getPath(firebaseApp, path);
+    return getPath(firebaseApp, path)
   }
-};
+}
 
-
-const defaultWatchColOpts = {
-  reduxPath: false,
-  append: false,
-  query: null,
-  overrideQuery: false,
-  keepDeleted: true,
-  preprocess: null,
-};
-
-export function watchCol(firebaseApp, firebasePath, opts = {}) {
-  const nextOpts = { ...defaultWatchColOpts, ...opts };
-  const { query, reduxPath, overrideQuery, keepDeleted, preprocess } = nextOpts;
-  let ref = getRef(firebaseApp, firebasePath);
-  const { path } = ref;
-
-  if (query) {
-    ref = query;
-  }
-
-  const location = reduxPath || getLocation(firebaseApp, firebasePath);
+export function watchCol(firebaseApp, firebasePath, reduxPath = false, append = false) {
+  let ref = getRef(firebaseApp, firebasePath)
+  const path = getLocation(firebaseApp, firebasePath)
+  let location = reduxPath || path
 
   return (dispatch, getState) => {
-    const isInitialized = initSelectors.isInitialised(getState(), path, location);
-    let initialized = false;
-    // TODO: check override query!
-    if (!isInitialized || overrideQuery) {
-      if (isInitialized) {
-        // TODO: check if this removes the query listener...
-        isInitialized();
-      }
-      dispatch(logLoading(location));
-      return new Promise((resolve, reject) => {
-        const unsub = ref.onSnapshot(
-          snapshot => {
-            dispatch(snapshotChange(location, snapshot));
-            dispatch(clearLoading(location));
-            snapshot.docChanges().forEach(change => {
-              if (change.type === 'added') {
-                const data = preprocess ? preprocess(change.doc.data()) : change.doc.data();
-                if (initialized) {
-                  dispatch(childAdded({
-                    id: change.doc.id,
-                    data,
-                  }, location));
-                }
-                else {
-                  const data = preprocess ? preprocess(change.doc.data()) : change.doc.data();
-                  initialized = true;
-                  dispatch(initialize([{
-                    id: change.doc.id,
-                    data,
-                  }], location, path, unsub));
-                }
-              }
-              if (change.type === 'modified') {
-                const data = preprocess ? preprocess(change.doc.data()) : change.doc.data();
-                dispatch(childChanged({
-                  id: change.doc.id,
-                  data,
-                }, location));
-              }
-              if (change.type === 'removed') {
-                if (keepDeleted) {
-                  const data = preprocess ? preprocess(change.doc.data()) : change.doc.data();
-                  dispatch(childRemovedMark({
-                    id: change.doc.id,
-                    data,
-                  }, location));
-                }
-                else {
-                  const data = preprocess ? preprocess(change.doc.data()) : change.doc.data();
-                  dispatch(childRemoved({
-                    id: change.doc.id,
-                    data: {
-                      ...data,
-                      __deleted: true,
+    const isInitialized = initSelectors.isInitialised(getState(), path, location)
+    let initialized = false
+
+    if (!isInitialized) {
+      dispatch(logLoading(location))
+      const unsub = ref.onSnapshot(
+        snapshot => {
+          snapshot.docChanges().forEach(change => {
+            if (change.type === 'added') {
+              if (initialized) {
+                dispatch(
+                  childAdded(
+                    {
+                      id: change.doc.id,
+                      data: change.doc.data()
                     },
-                  }, location));
-                }
+                    location
+                  )
+                )
+              } else {
+                initialized = true
+                dispatch(
+                  initialize(
+                    [
+                      {
+                        id: change.doc.id,
+                        data: change.doc.data()
+                      }
+                    ],
+                    location,
+                    path,
+                    unsub,
+                    append
+                  )
+                )
               }
-            });
-            resolve();
-          }
-          ,
-          error => {
-            dispatch(logError(location, error));
-            console.log(error);
-            reject();
-          },
-        );
-      });
+            }
+            if (change.type === 'modified') {
+              dispatch(
+                childChanged(
+                  {
+                    id: change.doc.id,
+                    data: change.doc.data()
+                  },
+                  location
+                )
+              )
+            }
+            if (change.type === 'removed') {
+              dispatch(
+                childRemoved(
+                  {
+                    id: change.doc.id,
+                    data: change.doc.data()
+                  },
+                  location
+                )
+              )
+            }
+          })
+        },
+        err => {
+          console.error(err)
+          dispatch(logError(location, err))
+        }
+      )
     }
-  };
-}
-
-export function getCol(firebaseApp, firebasePath, opts = {}) {
-  const nextOpts = { ...defaultWatchColOpts, ...opts };
-  const { query, reduxPath } = nextOpts;
-  let ref = getRef(firebaseApp, firebasePath);
-  const { path } = ref;
-
-  if (query) {
-    ref = query;
   }
-
-  const location = reduxPath || getLocation(firebaseApp, firebasePath);
-
-  return (dispatch, getState) => {
-    return ref.get(querySnapshot => {
-        const data = [];
-        querySnapshot.forEach(doc => {
-          data.push({ id: doc.id, data: doc.data() });
-        });
-        dispatch({ type: types.GET_COLLECTION, payload: data, location, opts: nextOpts });
-      },
-      error => {
-        console.log(error);
-      },
-    );
-  };
 }
-
 
 export function unwatchCol(firebaseApp, firebasePath) {
-
   return (dispatch, getState) => {
-    const location = firebasePath;
-    const allInitializations = selectors.getAllInitializations(getState());
-    const unsubs = allInitializations[location];
+    const location = firebasePath
+    const allInitializations = selectors.getAllInitializations(getState())
+    const unsubs = allInitializations[location]
 
     if (unsubs) {
       Object.keys(unsubs).map(key => {
-        const unsub = unsubs[key];
+        const unsub = unsubs[key]
         if (typeof unsub === 'function') {
-          unsub();
+          unsub()
         }
-        dispatch(unWatch(location));
-      });
+        dispatch(unWatch(location))
+      })
     }
-  };
+  }
 }
 
 export function destroyCol(firebaseApp, firebasePath, reduxPath = false) {
   return (dispatch, getState) => {
-    const location = reduxPath || getLocation(firebaseApp, firebasePath);
-    const locations = getState().initialization[location];
+    const location = reduxPath || getLocation(firebaseApp, firebasePath)
+    const locations = getState().initialization[location]
 
-    dispatch(unWatch(location));
-    dispatch(destroy(location));
+    dispatch(unWatch(location))
+    dispatch(destroy(location))
 
     if (reduxPath) {
-      dispatch(destroy(reduxPath));
-      unwatchCol(firebaseApp, reduxPath);
+      dispatch(destroy(reduxPath))
+      unwatchCol(firebaseApp, reduxPath)
     } else if (locations) {
       Object.keys(locations).forEach(location => {
-        unwatchCol(firebaseApp, location);
-        dispatch(destroy(location));
-      });
+        unwatchCol(firebaseApp, location)
+        dispatch(destroy(location))
+      })
     }
-
-  };
+  }
 }
 
 export function unwatchAllCol(firebaseApp, path) {
   return (dispatch, getState) => {
-    const allLists = selectors.getAllCols(getState());
+    const allLists = selectors.getAllCols(getState())
 
-    Object.keys(allLists).forEach((key, index) => {
-      unwatchCol(firebaseApp, key);
-      dispatch(unWatch(key));
-    });
-  };
+    Object.keys(allLists).forEach(function(key, index) {
+      unwatchCol(firebaseApp, key)
+      dispatch(unWatch(key))
+    })
+  }
 }
 
 export function unwatchAllCols(firebaseApp, path) {
   return (dispatch, getState) => {
-    const allColls = selectors.getAllCols(getState());
+    const allColls = selectors.getAllCols(getState())
 
-    Object.keys(allColls).forEach(function (key, index) {
-      unwatchCol(firebaseApp, key);
-      dispatch(destroyCol(firebaseApp, allColls[index]));
-    });
-  };
+    Object.keys(allColls).forEach(function(key, index) {
+      unwatchCol(firebaseApp, key)
+      dispatch(destroyCol(firebaseApp, allColls[index]))
+    })
+  }
 }
