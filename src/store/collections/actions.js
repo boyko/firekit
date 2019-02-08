@@ -2,10 +2,7 @@ import * as types from './types'
 import * as selectors from './selectors'
 import * as initSelectors from '../initialization/selectors'
 import { logError } from '../errors/actions'
-import {
-  logLoading,
-  clearLoading
-} from '../loadings/actions'
+import { logLoading,  clearLoading } from '../loadings/actions'
 
 export const initialize = (list, location, path, locationValue, append) => {
   return {
