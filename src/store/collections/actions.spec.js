@@ -20,6 +20,28 @@ describe('collections actions', () => {
     ).toBeA('function')
   })
 
+  it('watchCol should dispatch clearLoading if the query snapshot has no documents', () => {
+    const dispatch = expect.createSpy()
+    const getState = () => ({ initialization: {} })
+    const firebaseMock = {
+      firestore: () => ({
+        collection: () => ({
+          onSnapshot: ((handler) => {
+            const snapshot = {
+              size: 0,
+              docChanges: []
+            }
+            handler(snapshot)
+          })
+        }),
+      })
+    }
+    actions.watchCol(firebaseMock, 'path')(dispatch, getState)
+
+    expect(dispatch.calls.length).toEqual(2)
+    expect(dispatch).toHaveBeenCalledWith({type: '@@firekit/LOADING@LOG_LOADING', location: 'path'})
+  });
+
 
   it('destroyCol should call dispatch 7 time', () => {
     const getState = () => ({ initialization: { 'path1': 'path1', 'path2': 'path2' } })

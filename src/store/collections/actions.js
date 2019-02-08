@@ -2,7 +2,10 @@ import * as types from './types'
 import * as selectors from './selectors'
 import * as initSelectors from '../initialization/selectors'
 import { logError } from '../errors/actions'
-import { logLoading } from '../loadings/actions'
+import {
+  logLoading,
+  clearLoading
+} from '../loadings/actions'
 
 export const initialize = (list, location, path, locationValue, append) => {
   return {
@@ -85,6 +88,9 @@ export function watchCol(firebaseApp, firebasePath, reduxPath = false, append = 
     if (!isInitialized) {
       dispatch(logLoading(location))
       const unsub = ref.onSnapshot(snapshot => {
+        if (snapshot.size === 0) {
+          dispatch(clearLoading(location))
+        }
         snapshot.docChanges.forEach(change => {
           if (change.type === 'added') {
             if (initialized) {
