@@ -40,6 +40,7 @@ describe('collections actions', () => {
 
     expect(dispatch.calls.length).toEqual(2)
     expect(dispatch).toHaveBeenCalledWith({type: '@@firekit/LOADING@LOG_LOADING', location: 'path'})
+    expect(dispatch).toHaveBeenCalledWith({type: '@@firekit/LOADING@CLEAR_LOADING', location: 'path'})
   });
 
 
